@@ -36,6 +36,8 @@ var safearea_height = deviceHeight - getInset('top') - getInset('bottom');
 var input_view_height = 60
 var main_view_height = Platform.OS == "ios" ? safearea_height - menu_bar_height - 10 : safearea_height - menu_bar_height - StatusBar.currentHeight - 10;
 
+var message_list = [];
+
 export default class ScoreFacotrs extends Component {
     static navigationOptions = {
         header: null,
@@ -51,7 +53,8 @@ export default class ScoreFacotrs extends Component {
 
             keyboardHeight: 0,
             chat_type: props.navigation.state.params.chat_type,
-            selected_disease: props.navigation.state.params.disease,
+            selected_disease: null,
+            client: null,
             message_list: [],
             text_message: '',
             text_input_height: 0,
@@ -59,7 +62,24 @@ export default class ScoreFacotrs extends Component {
     }
 
     async UNSAFE_componentWillMount() {
-       
+        if(this.props.navigation.state.params.disease) {
+            this.setState({
+                selected_disease: this.props.navigation.state.params.disease
+            })
+        } else {
+            this.setState({
+                selected_disease: null
+            })
+        }
+        if(this.props.navigation.state.params.client) {
+            this.setState({
+                client: this.props.navigation.state.params.client
+            })
+        } else {
+            this.setState({
+                client: null
+            })
+        }
         
     };
 
@@ -82,25 +102,42 @@ export default class ScoreFacotrs extends Component {
 
         this.keyboardDidShowListener.remove();
         this.keyboardDidHideListener.remove();
+        
     }
 
     init_chat = async() => {
+        message_list = [];
         if(this.props.navigation.state.params.chat_type) {
             let chat_type = this.props.navigation.state.params.chat_type;
             if(chat_type == "group") {
                 var converted_diseasecode = this.props.navigation.state.params.disease.diagnoseCode;
-                console.log(converted_diseasecode)
+                
                 converted_diseasecode = converted_diseasecode.replace('.', '');
                 let dbRef = firebaseApp.database().ref('messages/group').child(converted_diseasecode);
                 await dbRef.on('child_added', (value) => {
                     let message = value.val();
+                    message_list.push(message)
                     this.setState({
-                        message_list: [...this.state.message_list, message]
+                        message_list: message_list
                     });
                     // console.warn(message.message)
                 });
-            } else if(chat_type == "recent") {
+            } else if(chat_type == "private") {
                 var client = this.props.navigation.state.params.client;
+                var ref_name = '';
+                if(Global.user_name > client.userContact) {
+                    ref_name = client.userContact + '-' + Global.user_name;
+                } else {
+                    ref_name = Global.user_name + '-' + client.userContact;
+                }
+                let dbRef = firebaseApp.database().ref('messages/private').child(ref_name);
+                await dbRef.on('child_added', (value) => {
+                    let message = value.val();
+                    message_list.push(message)
+                    this.setState({
+                        message_list: message_list
+                    });
+                });
             }
         }
     }
@@ -136,16 +173,22 @@ export default class ScoreFacotrs extends Component {
                     text_input_height: 0
                 });
                 await firebaseApp.database().ref().update(updates);
-            } else if(this.state.chat_type = "recent") {
-                let dbRef = firebaseApp.database().ref('messages/recent').child(Global.user_name).push().key;
+            } else if(this.state.chat_type = "private") {
+                var client = this.props.navigation.state.params.client;
+                var ref_name = '';
+                if(Global.user_name > client.userContact) {
+                    ref_name = client.userContact + '-' + Global.user_name;
+                } else {
+                    ref_name = Global.user_name + '-' + client.userContact;
+                }
+                let dbRef = firebaseApp.database().ref('messages/private').child(ref_name).push().key;
                 let updates = {};
                 let message = {
                     message: this.state.text_message,
                     created_at: firebase.database.ServerValue.TIMESTAMP,
                     from: Global.user_name
                 };
-                updates['messages/' + this.state.opponent_name + '/' + Global.user_name + '/' + dbRef] = message;
-                updates['messages/group/' + Global.user_name + '/' + dbRef] = message;
+                updates['messages/private/' + ref_name + '/' + dbRef] = message;
                 this.setState({
                     text_message: '',
                     text_input_height: 0
@@ -185,12 +228,16 @@ export default class ScoreFacotrs extends Component {
                 </View>
                 <View style = {{width: '70%', height: '100%', justifyContent: 'center'}}>
                 {
-                    this.state.selected_disease.diagnoseCode == "EpatientIndex" &&
+                    this.state.selected_disease != null && this.state.selected_disease.diagnoseCode == "EpatientIndex" &&
                     <Text style = {{fontSize: 18, color: '#ffffff'}} numberOfLines = {1} renderTruncatedFooter = {() => null}>EpatientIndex</Text>
                 }
                 {
-                    this.state.selected_disease.diagnoseCode != "EpatientIndex" &&
+                    this.state.selected_disease != null && this.state.selected_disease.diagnoseCode != "EpatientIndex" &&
                     <Text style = {{fontSize: 18, color: '#ffffff'}} numberOfLines = {1} renderTruncatedFooter = {() => null}>{this.state.selected_disease.diagnoseCode} : {this.state.selected_disease.diagnoseDesc}</Text>
+                }
+                {
+                    this.state.client != null && 
+                    <Text style = {{fontSize: 18, color: '#ffffff'}} numberOfLines = {1} renderTruncatedFooter = {() => null}>{this.state.client.userContact}</Text>
                 }
                 </View>
                 {/* <View style = {{width: '20%', height: '100%', justifyContent: 'center', alignItems: 'center'}}>

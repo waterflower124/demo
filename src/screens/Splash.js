@@ -69,10 +69,12 @@ export default class Splash extends Component {
                     })
                     .then(response => response.json())
                     .then(async data => {
+                        console.log(JSON.stringify(data))
                         if(data.error == "Unauthorized") {
                             Alert.alert('Warning!', "Username or Password is incorrect");
                             this.props.navigation.navigate("Login");
                         } else {
+                            Global.user_id = data.id;
                             Global.profile_user_name = user_name;
                             Global.user_name = user_name;
                             Global.password = password;

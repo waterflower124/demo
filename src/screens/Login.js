@@ -87,6 +87,7 @@ export default class Login extends Component {
             if(data.error == "Unauthorized") {
                 Alert.alert('Warning!', "Username or Password is incorrect");
             } else {
+                Global.user_id = data.id;
                 Global.profile_user_name = this.state.user_name;
                 Global.user_name = this.state.user_name;
                 Global.password = this.state.password;

@@ -130,7 +130,7 @@ export default class ScoreFacotrs extends Component {
         .then(async data => {
             var chat_recent_list = data.chatContacts;
             for(i = 0; i < chat_recent_list.length; i ++) {
-                // chat_recent_list[i].avatar_url = "";
+                chat_recent_list[i].avatar_url = "";
                 // chat_recent_list[i].address = "test address";
                 // chat_recent_list[i].status = "online";
                 let dbRef = firebaseApp.database().ref('users/' + chat_recent_list[i].userContact).child("avatar_url");
@@ -419,15 +419,15 @@ export default class ScoreFacotrs extends Component {
                 <ScrollView style = {{width: '100%'}}>
                 {
                     this.state.chat_recent_list.map((item, index) => 
-                    <TouchableOpacity style = {styles.recent_chat_item_view} onPress = {() => this.props.navigation.navigate("ChatScreen", {chat_type: 'recent', client: item})}>
+                    <TouchableOpacity style = {styles.recent_chat_item_view} onPress = {() => this.props.navigation.navigate("ChatScreen", {chat_type: 'private', client: item})}>
                         <View style = {styles.recent_chat_avatar_view}>
                         {
-                            item.avatar_url == "" &&
+                            (item.avatar_url == "" || item.avatar_url == null) &&
                             <Image style = {{width: "70%", height: "70%"}} resizeMode = {'cover'} source={require('../../assets/images/avatar_empty.png')}/>
                         }
                         {
-                            item.avatar_url != "" &&
-                            <Image style = {{width: "70%", height: "70%", borderRadius:56}} resizeMode = {'cover'} source={{uri: item.avatar_url}}/>
+                            item.avatar_url != "" && item.avatar_url != null &&
+                            <Image style = {{width: "70%", height: "70%", borderRadius: 56}} resizeMode = {'cover'} source={{uri: item.avatar_url}}/>
                         }
                         </View>
                         <View style = {styles.recent_chat_content_view}>
@@ -463,11 +463,11 @@ export default class ScoreFacotrs extends Component {
                     <View style = {styles.chat_request_item_view}>
                         <View style = {styles.client_avatar_view}>
                         {
-                            item.avatar_url == "" &&
+                            (item.avatar_url == "" || item.avatar_url == null) &&
                             <Image style = {{width: "70%", height: "70%"}} resizeMode = {'cover'} source={require('../../assets/images/avatar_empty.png')}/>
                         }
                         {
-                            item.avatar_url != "" &&
+                            item.avatar_url != "" && item.avatar_url != null &&
                             <Image style = {{width: "70%", height: "70%", borderRadius: 56}} resizeMode = {'cover'} source={{uri: item.avatar_url}}/>
                         }   
                         </View>
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
         width: 60,
         height: 60,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
     },
     recent_chat_status_text: {
         fontSize: 16,

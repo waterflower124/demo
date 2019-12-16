@@ -4,6 +4,8 @@ export default {
     // base_url:"http://swivli.com",
     update_account: false,
 
+    user_id: 0,
+
     user_type: '',
 
     profile_user_name: '',
